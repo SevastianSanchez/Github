@@ -1,0 +1,25 @@
+---
+title: "Data_Viz_CL1"
+author: "Sevastian Sanchez"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+ggplot(gapminder, aes(x = gdpPercap, y = lifeExp)) + geom_print #aes() means aesthetic 
+
+
+
+```
+
+```{r}
+#figure out what an environment is 
+reticulate::py_config()
+
+```
+

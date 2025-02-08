@@ -1,0 +1,138 @@
+---
+title: "Babynames Exercise (R Version)"
+author: "Thomas Brambor"
+format:
+  gfm:
+    toc: true
+  html:
+    toc: true
+    code-fold: false
+    theme: cosmo
+---
+
+# Introduction
+
+For each year from 1880 onwards, the data contains the number of children of each sex given each name. All names with more than 5 uses are given. The R package contains data up to 2017.
+(Source: <http://www.ssa.gov/oact/babynames/limits.html>)
+
+![](baby-names-wordcloud.jpg){width=400px}
+
+# Analysis
+
+## Data Loading and Initial Exploration
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE, eval=FALSE}
+options(repos = c(CRAN = "https://cloud.r-project.org/"))
+install.packages("babynames")
+install.packages("tidyverse")
+install.packages("ggplot2")
+```
+
+
+```{r, message=FALSE, warning=FALSE}
+library(babynames)
+library(tidyverse)
+library(ggplot2)
+
+str(babynames)
+head(babynames)
+
+# Basic statistics
+babynames <- babynames
+length(unique(babynames$name)) # Number of unique names
+sum(babynames$n)/10^6          # converting Total number of babies to millions
+```
+
+## Single Name Analysis
+Looking at the popularity of the name "James" over time:
+
+```{r}
+ggplot(babynames, aes(year, n)) +  # aes() selects the variables (x=year, y=n)
+  geom_line(data = filter(babynames, name=="James"), 
+            aes(color=sex))
+
+ggplot(babynames, aes(year, n)) +  # aes() selects the variables (x=year, y=n)
+  geom_line(daata = filter(babynames, name=="James"), aes(color=sex)) # this is what happens when I misspell data to daata 
+
+```
+
+## Top 10 Names Analysis
+
+```{r}
+# Calculate top 10 names
+top10 <- babynames %>%
+  group_by(sex, name) %>%
+  summarize(total = sum(n)) %>%
+  arrange(desc(total)) %>% #to sort by descending order ()
+  group_by(sex) %>% #
+  mutate(rank=row_number()) %>%
+  filter(rank<=10) %>%
+  arrange(sex, rank)
+
+# Show results by sex
+top10 %>% filter(sex=="F")
+top10 %>% filter(sex=="M")
+
+# Plot female trends
+babynames %>%
+  filter(sex=="F", name %in% (top10 %>% filter(sex=="F") %>% pull(name))) %>%
+  ggplot(aes(year, n, color=name)) +
+  geom_line() +
+  ggtitle("Top 10 Female Names Over Time")
+
+# Plot male trends
+babynames %>%
+  filter(sex=="M", name %in% (top10 %>% filter(sex=="M") %>% pull(name))) %>%
+  ggplot(aes(year, n, color=name)) +
+  geom_line() +
+  ggtitle("Top 10 Male Names Over Time")
+```
+
+## Recent Trends (2017)
+
+```{r}
+babynames %>% 
+  filter(year == 2017) %>% 
+  arrange(desc(prop)) %>% 
+  head(10) %>% 
+  ggplot(aes(reorder(name, prop), prop, fill = sex)) + 
+  geom_col() +
+  ylab("Proportion of Babies in 2017") + 
+  xlab("") +
+  coord_flip() + 
+  theme_minimal()
+```
+
+# Exercises
+
+1. Plot the most common names in 2017 over the entire period.
+```{r}
+# creating subset dataframe
+names_2017 <- subset(babynames, year==2017)
+names_2017 <- arrange(names_2017, desc(prop))
+
+# showing top 10 most popular names in 2017 
+top10 <- head(names_2017, n=10)
+
+# 
+ggplot(top10, 
+       aes(year, n) +  # aes() selects the variables (x=year, y=n)
+         geom_line(name, prop) +
+         aes(color=sex))
+
+plot.scatter(name, prop)
+
+
+```
+
+
+
+2. Explore which names are most often used as unisex names. For which names has the popularity over time changed a lot?
+3. Identify one particular pattern in the data. For example:
+    - religious names are less/more common over time
+    - the top 5 names capture a different portion of all names at different points in time
+    - there are more "unique" names now
+    - certain names became popular after historical events / figures etc.
+    - some old names are making a revival after a certain time period (say a generation?)
+    
+Then try to capture this one pattern in a graphical display that highlights this one point. 
